@@ -3,13 +3,15 @@ import subprocess
 import time
 from pathlib import Path
 
-import psycopg2
 import pytest
-from dictum.tests.conftest import chinook, engine, project  # noqa: F401
+from dictum_core.tests.conftest import chinook, engine, project  # noqa: F401
+import vertica_python
 
-from dictum_backend_postgres.postgres import PostgresBackend
+from dictum_backend_vertica.vertica_backend import VerticaBackend
 
-container_name = "dictum-postgres-backend-test"
+container_name = "dictum-vertica-backend-test"
+
+basepath = Path(__file__).parent
 
 
 def stop(fail=False):
@@ -23,32 +25,35 @@ def stop(fail=False):
 
 @pytest.fixture(scope="session")
 def backend():
-    script = Path(__file__).parent / "chinook.sql"
+    data = basepath / "data"
+    entrypoint = basepath / "docker-entrypoint.sh"
     cmd = shlex.split(
-        f"docker run -d --rm --name {container_name} -p 5432:5432 "
-        "-e POSTGRES_USER=chinook -e POSTGRES_PASSWORD=chinook "
-        f"-v {script}:/script.sql "
-        "postgres"
+        f"docker run -d --rm --name {container_name} -p 5433:5433 "
+        "-e VERTICA_DB_NAME=chinook -e APP_DB_USER=chinook -e APP_DB_PASSWORD=chinook "
+        f"-v {entrypoint}:/home/dbadmin/docker-entrypoint.sh "  # don't load sample data
+        f"-v {data}:/home/dbadmin/data "
+        "vertica/vertica-ce"
     )
     subprocess.check_call(cmd)
     params = dict(
-        host="localhost", dbname="chinook", user="chinook", password="chinook"
+        host="localhost", database="chinook", user="chinook", password="chinook"
     )
     for _ in range(30):
         try:
-            psycopg2.connect(**params)
+            vertica_python.connect(**params)
             break
-        except psycopg2.OperationalError:
-            time.sleep(1)
+        except vertica_python.errors.ConnectionError:
+            print("Waiting for database to start...")
+            time.sleep(3)
 
     restore_cmd = shlex.split(
         f"docker container exec {container_name} "
-        "psql -U chinook -W chinook -f /script.sql"
+        "/opt/vertica/bin/vsql -f /home/dbadmin/data/chinook.sql"
     )
     subprocess.check_call(restore_cmd)
     try:
-        yield PostgresBackend(
-            database=params["dbname"],
+        yield VerticaBackend(
+            database=params["database"],
             host=params["host"],
             username=params["user"],
             password=params["password"],

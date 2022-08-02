@@ -1,7 +1,7 @@
-# Postgres backend for Dictum
+# Vertica backend for Dictum
 
 Do not install this package directly, use `dictum` extras:
 
 ```sh
-pip install dictum[postgres]
+pip install dictum[vertica]
 ```
