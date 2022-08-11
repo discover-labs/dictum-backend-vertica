@@ -12,7 +12,7 @@ class VerticaCompiler(SQLAlchemyCompiler):
         if part == "week":
             part = "isoweek"
         if part in {"dayofweek", "dow"}:
-            part = "dayofweek_iso"
+            part = "isodow"
         expr = super().datepart(part, arg)
         return cast(expr, Integer)
 
