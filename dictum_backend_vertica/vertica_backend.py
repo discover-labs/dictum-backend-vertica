@@ -11,6 +11,8 @@ class VerticaCompiler(SQLAlchemyCompiler):
         """Datepart returns a float."""
         if part == "week":
             part = "isoweek"
+        if part in {"dayofweek", "dow"}:
+            part = "dayofweek_iso"
         expr = super().datepart(part, arg)
         return cast(expr, Integer)
 
