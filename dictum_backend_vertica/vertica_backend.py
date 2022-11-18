@@ -1,5 +1,6 @@
 from typing import Optional
 
+from dictum_core.backends.secret import Secret
 from dictum_core.backends.sql_alchemy import SQLAlchemyBackend, SQLAlchemyCompiler
 from sqlalchemy import Integer, cast
 
@@ -43,7 +44,7 @@ class VerticaBackend(SQLAlchemyBackend):
         host: str = "localhost",
         port: int = 5433,
         username: str = "dbadmin",
-        password: Optional[str] = None,
+        password: Secret = None,
         pool_size: Optional[int] = 5,
         default_schema: Optional[str] = None,
     ):
