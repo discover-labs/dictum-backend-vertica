@@ -3,6 +3,7 @@ from typing import Optional
 from dictum_core.backends.secret import Secret
 from dictum_core.backends.sql_alchemy import SQLAlchemyBackend, SQLAlchemyCompiler
 from sqlalchemy import Integer, cast
+from sqlalchemy.sql import func
 
 
 class VerticaCompiler(SQLAlchemyCompiler):
@@ -30,6 +31,9 @@ class VerticaCompiler(SQLAlchemyCompiler):
                 / 7
             )
         return super().datediff(part, start, end)
+
+    def dateadd(self, part, interval, value):
+        return func.timestampadd(part, interval, value)
 
 
 class VerticaBackend(SQLAlchemyBackend):
